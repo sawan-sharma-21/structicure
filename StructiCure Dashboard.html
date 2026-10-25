@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StructiCure Dashboard</title>
+<style>
+:root{--bg:#f3f1ec;--panel:#fff;--ink:#1b2430;--mut:#6b7480;--line:#d9d5cc;--temp:#c2410c;--mat:#1d6fa5;--str:#2f7d4f;--warn:#b7791f;--bad:#b42318;--ok:#2f7d4f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181d;--panel:#1c222a;--ink:#e8ebef;--mut:#97a1ad;--line:#2d3641;--temp:#fb923c;--mat:#5ab0e6;--str:#5cc48a;--warn:#e5b04a;--bad:#f0746a;--ok:#5cc48a}}
+:root[data-theme="dark"]{--bg:#14181d;--panel:#1c222a;--ink:#e8ebef;--mut:#97a1ad;--line:#2d3641;--temp:#fb923c;--mat:#5ab0e6;--str:#5cc48a;--warn:#e5b04a;--bad:#f0746a;--ok:#5cc48a}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 40px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:14px}
+h1{font:700 26px/1.1 Georgia,"Times New Roman",serif;margin:0}
+.sub{color:var(--mut);font-size:13px}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;border:1px solid var(--line);color:var(--mut)}
+.pill.live{color:var(--ok);border-color:var(--ok)}.pill.stale{color:var(--warn);border-color:var(--warn)}.pill.bad{color:var(--bad);border-color:var(--bad)}
+#status{border-radius:10px;padding:16px 18px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;border:2px solid var(--line);background:var(--panel);margin-bottom:14px}
+#status .big{font:700 24px/1.1 Georgia,serif}#status p{margin:4px 0 0;color:var(--mut);font-size:13.5px;max-width:62ch}
+#status.s-not{border-color:var(--bad)}#status.s-not .big{color:var(--bad)}
+#status.s-app{border-color:var(--warn)}#status.s-app .big{color:var(--warn)}
+#status.s-rev{border-color:var(--ok)}#status.s-rev .big{color:var(--ok)}
+#status.s-blk{border-color:var(--mut);border-style:dashed}#status.s-blk .big{color:var(--mut)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.kpi small{color:var(--mut);display:block;font-size:12.5px}
+.kpi b{font:600 28px/1.2 Georgia,serif;font-variant-numeric:tabular-nums}.kpi i{font-style:normal;font-size:13px;color:var(--mut);margin-left:3px}
+.bar{height:6px;background:var(--line);border-radius:4px;margin-top:6px;overflow:hidden}.bar span{display:block;height:100%;background:var(--str);width:0}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.card h2{font:600 15px/1.2 "Segoe UI",Roboto,sans-serif;margin:0 0 8px}
+svg.ch{width:100%;height:auto;display:block}
+.ctl label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0;font-size:13.5px}
+.ctl input[type=number]{width:84px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.ctl select{padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+button{font:inherit;font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--mat)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--mat);outline-offset:2px}
+button.on{background:var(--bad);color:#fff;border-color:var(--bad)}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.dq{list-style:none;margin:0;padding:0;font-size:13.5px}.dq li{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line)}.dq li:last-child{border:0}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+#log{font:12px/1.5 Consolas,Menlo,monospace;max-height:150px;overflow:auto;color:var(--mut)}
+.note{font-size:12.5px;color:var(--mut);margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>StructiCure</h1><div class="sub">Concrete maturity monitor · specimen S-01 · simulated DS18B20 + ESP8266 feed</div></div>
+  <div class="row"><span class="pill" id="pLink">Wi-Fi</span><span class="pill" id="pSens">Sensor</span><span class="pill" id="pClock">t = 0 h</span></div>
+</header>
+
+<section id="status" aria-live="polite"><div><div class="big" id="stBig">–</div><p id="stTxt"></p></div><div class="sub" id="stSub"></div></section>
+
+<section class="kpis">
+  <div class="kpi"><small>Internal temperature</small><b id="kT">–</b><i>°C</i></div>
+  <div class="kpi"><small>Maturity (Nurse–Saul)</small><b id="kM">–</b><i>°C·h</i></div>
+  <div class="kpi"><small>Estimated strength</small><b id="kS">–</b><i>MPa</i><div class="bar"><span id="kBar"></span></div></div>
+  <div class="kpi"><small>Removal threshold</small><b id="kTh">–</b><i>MPa</i></div>
+  <div class="kpi"><small>Elapsed curing</small><b id="kE">–</b><i>h</i></div>
+</section>
+
+<div class="grid">
+  <div>
+    <div class="card"><h2>Internal temperature vs time</h2><svg class="ch" id="cT" viewBox="0 0 620 210" role="img" aria-label="Temperature chart"></svg></div>
+    <div class="card"><h2>Maturity index vs time</h2><svg class="ch" id="cM" viewBox="0 0 620 210" role="img" aria-label="Maturity chart"></svg></div>
+    <div class="card"><h2>Estimated strength vs time</h2><svg class="ch" id="cS" viewBox="0 0 620 210" role="img" aria-label="Strength chart"></svg></div>
+  </div>
+  <div>
+    <div class="card ctl"><h2>Simulation</h2>
+      <label>Speed <select id="speed"><option value="2">1× (2 min / tick)</option><option value="30">30 min / tick</option><option value="120" selected>2 h / tick</option><option value="360">6 h / tick</option></select></label>
+      <div class="row"><button id="bPlay">Pause</button><button id="bReset">Restart</button></div>
+      <h2 style="margin-top:12px">Inject fault</h2>
+      <div class="row"><button id="fSensor">Sensor off</button><button id="fPower">Power loss</button><button id="fWifi">Wi-Fi loss</button></div>
+    </div>
+    <div class="card ctl"><h2>Calibration &amp; thresholds</h2>
+      <label>Datum T₀ (°C)<input type="number" id="iT0" value="-10" step="1"></label>
+      <label>Strength = a + b·ln(M): a<input type="number" id="iA" value="-60" step="1"></label>
+      <label>b<input type="number" id="iB" value="12.5" step="0.5"></label>
+      <label>Target strength (MPa)<input type="number" id="iTh" value="20" step="1"></label>
+      <label>Approaching at (% of target)<input type="number" id="iAp" value="80" step="5"></label>
+      <label>CTM calibration validated<input type="checkbox" id="iCal" checked></label>
+      <div class="sub">Defaults are demo values, not a validated mix model. Replace a, b after CTM tests.</div>
+    </div>
+    <div class="card"><h2>Data quality</h2><ul class="dq" id="dq"></ul></div>
+    <div class="card"><h2>Event log</h2><div id="log"></div></div>
+  </div>
+</div>
+<p class="note">Decision support only. Final formwork or shoring removal stays with qualified engineers, project requirements and applicable tests. All values shown are simulated until the physical sensor node is connected.</p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const S={t:0,d:[],M:0,f:{sensor:false,power:false,wifi:false},gap:false,frozen:null,run:true};
+const P=()=>({T0:+$('iT0').value,a:+$('iA').value,b:+$('iB').value,th:+$('iTh').value,ap:+$('iAp').value/100,cal:$('iCal').checked});
+function log(m){const e=$('log');e.innerHTML=`<div>[${S.t.toFixed(1)} h] ${m}</div>`+e.innerHTML}
+function trueT(t){const x=t/14;return 27+3*Math.sin((t-14)/24*2*Math.PI)+16*x*Math.exp(1-x)*Math.exp(-t/90)}
+function str(M,p){return M>1?Math.max(0,p.a+p.b*Math.log(M)):0}
+function step(){
+  const dm=+$('speed').value,dh=dm/60,p=P();
+  S.t+=dh;
+  if(S.f.power){if(!S.gap){S.gap=true;log('Power loss: monitoring gap started')}return}
+  if(S.f.sensor){S.d.push({t:S.t,T:null,M:S.M,S:str(S.M,p)});return}
+  const T=Math.round((trueT(S.t)+(Math.random()-.5)*.3)*16)/16;
+  if(T>p.T0)S.M+=(T-p.T0)*dh;
+  S.d.push({t:S.t,T,M:S.M,S:str(S.M,p)});
+}
+function chart(id,key,col,unit,lines,ymin){
+  const v=(S.frozen==null?S.d:S.d.slice(0,S.frozen)),W=620,H=210,L=44,R=10,Tp=10,B=26;
+  const tMax=Math.max(24,S.t),pts=v.filter(r=>r[key]!=null);
+  let hi=Math.max(...pts.map(r=>r[key]),...lines.map(l=>l.y),1)*1.12,lo=ymin??Math.min(...pts.map(r=>r[key]),0);
+  if(!isFinite(lo))lo=0;
+  const X=t=>L+(t/tMax)*(W-L-R),Y=y=>H-B-((y-lo)/(hi-lo))*(H-B-Tp);
+  let g='';
+  for(let i=0;i<=4;i++){const y=lo+(hi-lo)*i/4;g+=`<line x1="${L}" x2="${W-R}" y1="${Y(y)}" y2="${Y(y)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(y)+4}" text-anchor="end" font-size="11" fill="var(--mut)">${y.toFixed(unit==='°C·h'?0:1)}</text>`}
+  for(let i=0;i<=4;i++){const t=tMax*i/4;g+=`<text x="${X(t)}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--mut)">${t.toFixed(0)} h</text>`}
+  lines.forEach(l=>{g+=`<line x1="${L}" x2="${W-R}" y1="${Y(l.y)}" y2="${Y(l.y)}" stroke="${l.c}" stroke-dasharray="5 4"/><text x="${W-R-2}" y="${Y(l.y)-4}" text-anchor="end" font-size="11" fill="${l.c}">${l.n}</text>`});
+  let path='',pen=false;
+  v.forEach(r=>{if(r[key]==null){pen=false;return}path+=(pen?'L':'M')+X(r.t).toFixed(1)+' '+Y(r[key]).toFixed(1);pen=true});
+  g+=`<path d="${path}" fill="none" stroke="${col}" stroke-width="2.2"/>`;
+  if(S.gap||S.d.some(r=>r.T==null))v.forEach((r,i)=>{if(r.T==null)g+=`<rect x="${X(r.t)-2}" y="${Tp}" width="4" height="${H-B-Tp}" fill="var(--bad)" opacity=".18"/>`});
+  $(id).innerHTML=g;
+}
+function render(){
+  const p=P(),v=(S.frozen==null?S.d:S.d.slice(0,S.frozen)),last=v[v.length-1],lastOk=[...v].reverse().find(r=>r.T!=null);
+  const stale=S.frozen!=null,invalid=S.f.sensor||(last&&last.T==null);
+  $('pClock').textContent=`t = ${S.t.toFixed(1)} h`;
+  const pl=$('pLink');pl.textContent=stale?'Wi-Fi: stale':'Wi-Fi: live';pl.className='pill '+(stale?'stale':'live');
+  const ps=$('pSens');ps.textContent=invalid?'Sensor: invalid':S.f.power?'Node: no power':'Sensor: OK';ps.className='pill '+(invalid||S.f.power?'bad':'live');
+  $('kT').textContent=lastOk?lastOk.T.toFixed(2):'–';
+  $('kM').textContent=last?last.M.toFixed(0):'–';
+  const s=last?last.S:0;$('kS').textContent=last?s.toFixed(1):'–';
+  $('kTh').textContent=p.th.toFixed(0);$('kE').textContent=(last?last.t:0).toFixed(1);
+  $('kBar').style.width=Math.min(100,s/p.th*100)+'%';
+  const r=s/p.th;let c='s-not',big='NOT READY',txt='Estimated strength is well below the removal threshold. Keep formwork and supports in place.';
+  if(r>=p.ap){c='s-app';big='APPROACHING TARGET';txt='Strength estimate is nearing the threshold. Plan a CTM check and engineer inspection.'}
+  if(r>=1){c='s-rev';big='ENGINEER REVIEW';txt='Estimate has reached the threshold. This does not approve removal; a qualified engineer must review results and project requirements.'}
+  if(S.gap){c='s-rev';big='ENGINEER REVIEW';txt='Monitoring gap detected after power loss. Maturity may be under-counted, so confirm with a physical test before any decision.'}
+  if(invalid){c='s-blk';big='DATA INVALID';txt='Sensor disconnected or reading out of range. Strength status is held and not updated.'}
+  if(!p.cal){c='s-blk';big='CALIBRATION REQUIRED';txt='No validated maturity–strength calibration for this mix. Automatic status is blocked.'}
+  $('status').className=c;$('stBig').textContent=big;$('stTxt').textContent=txt;
+  $('stSub').textContent=stale?'Showing last received data (Wi-Fi lost). Local log keeps recording.':`Target ${p.th} MPa · warning at ${(p.ap*100).toFixed(0)}%`;
+  const age=stale?((S.d[S.d.length-1].t-v[v.length-1].t)*60):0;
+  const row=(a,b,k)=>`<li><span>${a}</span><span class="${k}">${b}</span></li>`;
+  $('dq').innerHTML=row('Sensor reading',invalid?'Invalid (−127 °C)':'Valid',invalid?'bad':'ok')+row('Samples logged',S.d.length,'ok')+row('Dashboard data',stale?`Stale ${age.toFixed(0)} min`:'Fresh',stale?'warn':'ok')+row('Monitoring gap',S.gap?'Yes':'None',S.gap?'bad':'ok')+row('Calibration',p.cal?'Demo model':'Required',p.cal?'warn':'bad')+row('Sampling','configurable (1–2 min test)','ok');
+  chart('cT','T',getComputedStyle(document.documentElement).getPropertyValue('--temp'),'°C',[],0);
+  chart('cM','M',getComputedStyle(document.documentElement).getPropertyValue('--mat'),'°C·h',[],0);
+  chart('cS','S',getComputedStyle(document.documentElement).getPropertyValue('--str'),'MPa',[{y:p.th,c:'var(--bad)',n:'target '+p.th+' MPa'},{y:p.th*p.ap,c:'var(--warn)',n:'warning'}],0);
+}
+function tick(){if(!S.run)return;if(S.t>=336){S.run=false;$('bPlay').textContent='Finished';return}step();render()}
+function toggle(k,btn,onMsg,offMsg){S.f[k]=!S.f[k];btn.classList.toggle('on',S.f[k]);
+  if(k==='wifi'){S.frozen=S.f.wifi?S.d.length:null}
+  if(k==='power'&&!S.f[k])log('Power restored');
+  log(S.f[k]?onMsg:offMsg);render()}
+$('fSensor').onclick=e=>toggle('sensor',e.target,'Sensor disconnected','Sensor reconnected');
+$('fPower').onclick=e=>toggle('power',e.target,'Power loss injected','Node powered again');
+$('fWifi').onclick=e=>toggle('wifi',e.target,'Wi-Fi lost; node logs locally','Wi-Fi restored; buffered data synced');
+$('bPlay').onclick=()=>{if(S.t>=336)return;S.run=!S.run;$('bPlay').textContent=S.run?'Pause':'Resume'};
+$('bReset').onclick=()=>{S.t=0;S.d=[];S.M=0;S.gap=false;S.frozen=null;S.run=true;Object.keys(S.f).forEach(k=>S.f[k]=false);document.querySelectorAll('button.on').forEach(b=>b.classList.remove('on'));$('bPlay').textContent='Pause';$('log').innerHTML='';log('Simulation restarted');render()};
+['iT0','iA','iB','iTh','iAp','iCal'].forEach(i=>$(i).addEventListener('change',()=>{if(i==='iT0'||i==='iA'||i==='iB'){let M=0,prev=0;S.d.forEach(r=>{if(r.T!=null&&r.T>P().T0){M+=(r.T-P().T0)*((r.t-prev)||0)}prev=r.t;r.M=M;r.S=str(M,P())});S.M=M}render()}));
+log('Simulation started: concrete cast, sensor embedded');
+for(let i=0;i<3;i++)step();render();
+setInterval(tick,450);
+</script>
+</body>
+</html>
